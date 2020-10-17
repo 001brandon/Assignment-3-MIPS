@@ -9,10 +9,11 @@ string5: .asciiz "End of Program\n"
 string6: .asciiz "[Error] no ASCII2MC!\n"
 string7: .asciiz "[Error] no MC2ASCII!\n"
 string8: .asciiz "[Error] Invalid combination!\n"
-string9: .asciiz "Congrats Brandon!\n"
-string10: .asciiz "Way to go dude!\n"
+string9: .asciiz "Dot\n"
+string10: .asciiz "Dash!\n"
 string11: .asciiz "Compare\n"
 string12: .asciiz "They Equal\n"
+stringvals: .asciiz "-. "
 endLine: .asciiz "\n"
 
 dict: .word 0x55700030, 0x95700031, 0xA5700032, 0xA9700033, 0xAA700034, 0xAAB00035, 0x6AB00036, 0x5AB00037, 0x56B00038, 0x55B00039, 0x9C000041, 0x6AC00042, 0x66C00043, 0x6B000044, 0xB0000045, 0xA6C00046, 0x5B000047, 0xAAC00048, 0xAC000049, 0x95C0004A, 0x6700004B, 0x9AC0004C, 0x5C00004D, 0x6C00004E, 0x5700004F, 0x96C00050, 0x59C00051, 0x9B000052, 0xAB000053, 0x70000054, 0xA7000055, 0xA9C00056, 0x97000057, 0x69C00058, 0x65C00059, 0x5AC0005A
@@ -118,12 +119,47 @@ MC2A:  #Here we get the buffer we want to read from and print some stuff
   la $a0 , string2        
   syscall
   li $v0, 8
-  la $a0, buffer
+  la $a0, buffer  #get user buffer
   li $a1, 1024
   syscall
   li $v0 , 4
-  la $a0 , buffer
+  la $a0 , buffer  #print what they entered
   syscall 
+
+li $s0, 0 #value
+li $t4, 0 #counter
+CheckDash:
+  #This has to take in the dashes and dots, assign bit values based on input
+  la $t0, buffer    #Load buffer into memory
+  la $t1, stringvals #Load 3 options into memory
+  add $t0, $t0, $t4  #Add counter to buffer address to get index
+  lb $t2, 0($t0) #Load into memory
+  lb $t3, 0($t1)
+  bne $t2, $t3, CheckDot #If not equal see if it is dot
+  li $v0, 4  
+  la $a0, string10
+  syscall
+  addi $t4, $t4, 1 #Increment counter
+  j CheckDash #Recursion
+
+CheckDot:
+  lb $t3, 1($t1)  #Load second option into memory
+  bne $t2, $t3, CheckSpace #If not equal check space
+  li $v0, 4
+  la $a0, string9
+  syscall
+  addi $t4, $t4, 1  #Increment
+  j CheckDash  #Recursion
+  
+CheckSpace:
+  lb $t3, 2($t1)  #Load third option into memory
+  bne $t2, $t3, EXIT #If not equal exit
+  li $v0, 4
+  la $a0, string12
+  syscall
+  addi $t4, $t4, 1  #Increment
+  j CheckDash #Recursion
+
 
 
 li $t2, 0 #loads a counter
