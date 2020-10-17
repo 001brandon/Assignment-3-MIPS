@@ -126,6 +126,8 @@ MC2A:  #Here we get the buffer we want to read from and print some stuff
   la $a0 , buffer  #print what they entered
   syscall 
 
+
+
 li $s0, 0 #value
 li $t4, 0 #counter
 CheckDash:
@@ -140,6 +142,8 @@ CheckDash:
   la $a0, string10
   syscall
   addi $t4, $t4, 1 #Increment counter
+  sll $s0, $s0, 2  #shifts and adds the value of the dot
+  addi $s0,$s0, 1
   j CheckDash #Recursion
 
 CheckDot:
@@ -149,16 +153,52 @@ CheckDot:
   la $a0, string9
   syscall
   addi $t4, $t4, 1  #Increment
+  sll $s0, $s0, 2
+  addi $s0,$s0, 2
   j CheckDash  #Recursion
   
 CheckSpace:
   lb $t3, 2($t1)  #Load third option into memory
-  bne $t2, $t3, EXIT #If not equal exit
+  bne $t2, $t3, EndCode #If not equal exit
   li $v0, 4
   la $a0, string12
   syscall
   addi $t4, $t4, 1  #Increment
   j CheckDash #Recursion
+EndCode:
+  sll $s0, $s0, 2  #shifts and adds the value of the dot
+  addi $s0,$s0, 3  #puts in endcode
+  addi $t4, $t4, 1
+  #HAVE TO SHIFT TO PUT THIS ALL THE WAY TO THE RIGHT
+  li $t5, 8
+  sub $t5, $t5, $t4  #8 inputs - used inputs = inputs left to shift by
+  sll $t5, $t5, 1  #get in groups of 2 bit inputs
+  sllv $s0, $s0, $t5 #shift by variable amount
+
+GetValue:
+  #shift dict value to the right by 8 then compare
+  #can use t0 t1 t2 t3 do not use anymore
+  la $t0, dict   #load address
+
+Iterate:
+  lw $t1, 0($t0)  # Load dictionary value **SHOULD PROBABLY ADD BOUNDARY CHECKS**
+  srl $t1, $t1, 16 # Shift the value to the right by 16 to compare with $s0
+  addi $t0, $t0, 4 # Increment Dictionary Counter
+  bne $t1, $s0, Iterate  #Checks if it is a valid dictionary value **SHOULD PROBABLY HAVE BOUND CHECKS HERE**
+  addi $t0, $t0, -4  #Decrements the dictionary to go to correct spot
+  lw $t1, 0($t0)  # Reloads the value
+  sll $s0, $s0, 16 # Shifts s0 to the left to be aligned with assignemnt
+  andi $t1, $t1, 0x000000FF  # Gets ascii value from $t1
+  add $s0, $s0, $t1 #Add ascii to s0
+  li $v0, 11  #print char
+  li $a0, 0 #load 0
+  add $a0, $a0, $t1 #print t1 which is the ascii value for dictionary search that hit
+  syscall
+  j EXIT
+
+
+
+
 
 
 
