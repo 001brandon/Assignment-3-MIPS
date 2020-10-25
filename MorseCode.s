@@ -1,7 +1,7 @@
 .data
 buffer: .space 1024
 string0: .asciiz "Select Operation Mode [0=ASCII to MC, 1=MC to ASCII]:"
-string1: .asciiz "Enter a Character: "
+string1: .asciiz "Enter a String: "
 string2: .asciiz "Enter a Pattern: "
 string3: .asciiz "Morse Code: "
 string4: .asciiz "ASCII: "
@@ -35,26 +35,45 @@ main:
   bne $v0, $0, MC2A
 
 A2MC:
+  li $v0 , 4
+  la $a0 , string1        
+  syscall
+  li $v0, 8
+  la $a0, buffer  #get user buffer
+  li $a1, 1024
+  syscall
+  li $v0 , 4
+  la $a0 , buffer  #print what they entered
+  syscall 
   li $v0, 4                 # print "Enter a Letter:" 
   la $a0, string1
   syscall                   # syscall print string1
-
-  li $t0, 1                 # Define length
-  li $v0, 12                # Read character
-  syscall                   # syscall Read character
-  move $t0,$v0              # Transfer the char entered to the temporary value
-  
-  li $t2, 1                 # Define length
-  li $v0, 12                # Read NULL character 
-  syscall                   # syscall Read character
 
   la $t2, dict              # Load address of dir
   li $t3, 0                 # Initialize index
   li $t4, 36                # Initialize boundary
 
+#####################################################
+# the problem is within this
+# it should be loading the buffer, moving address to t1, then incrementing by 1 for the next time
+# im not sure why but when the address is incremented like  
+# ```
+# addi $s1, $s1, 1
+# add $t0, $t0, $s1
+# ```
+# it doesnt work , but doing
+# `addi $t0, $t0, 1`
+# works fine
+
+  li $s1, 0 #This SHOULD be indexing for buffer memory address
 LoopA2MC:
+  la $t0, buffer
+  add $t0, $t0, $s1
+  lb $t1, ($t0)
+
+######################################################################
   lb $t5, ($t2)             # Load value to be compared
-  beq $t0, $t5, FndA2MC     # Compare values
+  beq $t1, $t5, FndA2MC     # Compare values
   addi $t2, $t2, 4          # Next symbol
   addi $t3, $t3, 1          # Next index
   blt $t3, $t4, LoopA2MC    # Evaluate index condition
@@ -82,7 +101,8 @@ caseE:
   li $v0, 4                 # Print string code
   la $a0, endLine           # Print NewLine
   syscall                   # syscall print value
-  j EXIT                    # End
+  addi $s1, $s1, 1
+  j LoopA2MC    #loop back to top for next character
 
 caseZ:
   sll $t3, $t3, 1           # Shift Left
