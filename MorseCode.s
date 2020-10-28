@@ -53,25 +53,12 @@ A2MC:
   li $t3, 0                 # Initialize index
   li $t4, 36                # Initialize boundary
 
-#####################################################
-# the problem is within this
-# it should be loading the buffer, moving address to t1, then incrementing by 1 for the next time
-# im not sure why but when the address is incremented like  
-# ```
-# addi $s1, $s1, 1
-# add $t0, $t0, $s1
-# ```
-# it doesnt work , but doing
-# `addi $t0, $t0, 1`
-# works fine
-
   li $s1, 0 #This SHOULD be indexing for buffer memory address
-LoopA2MC:
-  la $t0, buffer
-  add $t0, $t0, $s1
-  lb $t1, ($t0)
+  la $t0, buffer #loading buffer outside of loop
 
-######################################################################
+LoopA2MC:
+  lb $t1, 0($t0) #loading char
+
   lb $t5, ($t2)             # Load value to be compared
   beq $t1, $t5, FndA2MC     # Compare values
   addi $t2, $t2, 4          # Next symbol
@@ -101,7 +88,7 @@ caseE:
   li $v0, 4                 # Print string code
   la $a0, endLine           # Print NewLine
   syscall                   # syscall print value
-  addi $s1, $s1, 1
+  addi $t0, $t0, 1 #incrementing address of buffer for next char
   j LoopA2MC    #loop back to top for next character
 
 caseZ:
