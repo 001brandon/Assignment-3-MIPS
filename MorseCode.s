@@ -13,6 +13,7 @@ string9: .asciiz "Dot\n"
 string10: .asciiz "Dash!\n"
 string11: .asciiz "Compare\n"
 string12: .asciiz "Space\n"
+string13: .asciiz "you did it\n"
 stringvals: .asciiz "-. "
 endLine: .asciiz "\n"
 decodedAscii: .space 128
@@ -45,31 +46,35 @@ A2MC:
   li $v0 , 4
   la $a0 , buffer  #print what they entered
   syscall 
-  li $v0, 4                 # print "Enter a Letter:" 
-  la $a0, string1
-  syscall                   # syscall print string1
 
+  li $t6, 10 #byte used to find the end of buffer
+  la $t0, buffer #loading buffer outside of loop
+
+  li $v0, 4                 # print "Morse Code:" 
+  la $a0, string3
+  syscall                   # syscall print string3
+
+Reset:
   la $t2, dict              # Load address of dir
   li $t3, 0                 # Initialize index
   li $t4, 36                # Initialize boundary
 
-  li $s1, 0 #This SHOULD be indexing for buffer memory address
-  la $t0, buffer #loading buffer outside of loop
-
 LoopA2MC:
+  #li $v0, 1                 # print "Enter a Letter:" 
+  #move $a0, $t1
+  #syscall                   # syscall print string3
+
   lb $t1, 0($t0) #loading char
 
   lb $t5, ($t2)             # Load value to be compared
   beq $t1, $t5, FndA2MC     # Compare values
+  beq $t1, $t6, caseNull    # branch when null byte is reached
   addi $t2, $t2, 4          # Next symbol
   addi $t3, $t3, 1          # Next index
   blt $t3, $t4, LoopA2MC    # Evaluate index condition
   j ErrorA2MC
 
 FndA2MC:
-  li $v0, 4                 # print "Enter a Letter:" 
-  la $a0, string3
-  syscall                   # syscall print string3
 
   lw $t3, ($t2)             # Load value to be printed
   li $t4, 0x80000000        # Load bitmask
@@ -85,11 +90,15 @@ caseO:
   beq $t5, $0, pdot         # 10 Found
 
 caseE:
-  li $v0, 4                 # Print string code
-  la $a0, endLine           # Print NewLine
+  li $v0, 11                 # Print string code
+  lb $a0, s_spc           # Print space after each morse
   syscall                   # syscall print value
-  addi $t0, $t0, 1 #incrementing address of buffer for next char
-  j LoopA2MC    #loop back to top for next character
+  addi $t0, $t0, 1  #add one to address for next char
+  j Reset   #loop back to top for next character
+
+caseNull:
+ #this is kinda unnessiary but I'm leaving in in case More needs to be added
+  j EXIT #exit after null byte
 
 caseZ:
   sll $t3, $t3, 1           # Shift Left
