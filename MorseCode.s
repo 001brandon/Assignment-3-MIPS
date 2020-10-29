@@ -13,6 +13,8 @@ string9: .asciiz "Dot\n"
 string10: .asciiz "Dash!\n"
 string11: .asciiz "Compare\n"
 string12: .asciiz "Space\n"
+string13: .asciiz "\n[Error] Unrecognize Morse Code, exiting the program\n"
+string14: .asciiz "\n[Error] Extra space or no input detected, exiting the program\n"
 stringvals: .asciiz "-. "
 endLine: .asciiz "\n"
 decodedAscii: .space 128
@@ -140,6 +142,7 @@ CheckDash:
   add $t0, $t0, $s1  #Add counter to buffer address to get index
   lb $t2, 0($t0) #Load into memory
   lb $t3, 0($t1)
+  #beq $t2, $0, EXIT   #Checks if nothing is entered
   bne $t2, $t3, CheckDot #If not equal see if it is dot
   li $v0, 4  
   la $a0, string10
@@ -172,6 +175,7 @@ CheckSpace:
 
 
 EndCode:
+  beq $s0, $0, TooManySpaces
   sll $s0, $s0, 2  #shifts and adds the value of the endcode
   addi $s0,$s0, 3  #puts in endcode
   addi $t4,$t4,1
@@ -186,8 +190,12 @@ GetValue:
   #shift dict value to the right by 8 then compare
   #can use t0 t1 t2 t3 do not use anymore
   la $t0, dict   #load address
+  li $t2,-1 #counter
+  li $t3, 36 #max bound
 
 Iterate:
+  addi $t2, $t2, 1
+  beq $t2, $t3, NoMorse
   lw $t1, 0($t0)  # Load dictionary value **SHOULD PROBABLY ADD BOUNDARY CHECKS**
   srl $t1, $t1, 16 # Shift the value to the right by 16 to compare with $s0
   addi $t0, $t0, 4 # Increment Dictionary Counter
@@ -223,6 +231,20 @@ Iterate:
 ErrorMC2A:
   li $v0 , 4                # print "Error no MC2ASCII!" 
   la $a0 , string7
+  syscall                   # syscall print string7
+
+  j EXIT
+
+TooManySpaces:
+  li $v0 , 4                # print "Error no MC2ASCII!" 
+  la $a0 , string14
+  syscall                   # syscall print string7
+
+  j EXIT
+
+NoMorse:
+  li $v0 , 4                # print "Error no MC2ASCII!" 
+  la $a0 , string13
   syscall                   # syscall print string7
 
   j EXIT
