@@ -1,7 +1,7 @@
 .data
 buffer: .space 1024
 string0: .asciiz "Select Operation Mode [0=ASCII to MC, 1=MC to ASCII]:"
-string1: .asciiz "Enter a Character: "
+string1: .asciiz "Enter a String: "
 string2: .asciiz "Enter a Pattern: "
 string3: .asciiz "Morse Code: "
 string4: .asciiz "ASCII: "
@@ -15,6 +15,7 @@ string11: .asciiz "Compare\n"
 string12: .asciiz "Space\n"
 string13: .asciiz "\n[Error] Unrecognize Morse Code, exiting the program\n"
 string14: .asciiz "\n[Error] Extra space or no input detected, exiting the program\n"
+string13: .asciiz "you did it\n"
 stringvals: .asciiz "-. "
 endLine: .asciiz "\n"
 decodedAscii: .space 128
@@ -37,35 +38,45 @@ main:
   bne $v0, $0, MC2A
 
 A2MC:
-  li $v0, 4                 # print "Enter a Letter:" 
-  la $a0, string1
-  syscall                   # syscall print string1
+  li $v0 , 4
+  la $a0 , string1        
+  syscall
+  li $v0, 8
+  la $a0, buffer  #get user buffer
+  li $a1, 1024
+  syscall
+  li $v0 , 4
+  la $a0 , buffer  #print what they entered
+  syscall 
 
-  li $t0, 1                 # Define length
-  li $v0, 12                # Read character
-  syscall                   # syscall Read character
-  move $t0,$v0              # Transfer the char entered to the temporary value
-  
-  li $t2, 1                 # Define length
-  li $v0, 12                # Read NULL character 
-  syscall                   # syscall Read character
+  li $t6, 10 #byte used to find the end of buffer
+  la $t0, buffer #loading buffer outside of loop
 
+  li $v0, 4                 # print "Morse Code:" 
+  la $a0, string3
+  syscall                   # syscall print string3
+
+Reset:
   la $t2, dict              # Load address of dir
   li $t3, 0                 # Initialize index
   li $t4, 36                # Initialize boundary
 
 LoopA2MC:
+  #li $v0, 1                 # print "Enter a Letter:" 
+  #move $a0, $t1
+  #syscall                   # syscall print string3
+
+  lb $t1, 0($t0) #loading char
+
   lb $t5, ($t2)             # Load value to be compared
-  beq $t0, $t5, FndA2MC     # Compare values
+  beq $t1, $t5, FndA2MC     # Compare values
+  beq $t1, $t6, caseNull    # branch when null byte is reached
   addi $t2, $t2, 4          # Next symbol
   addi $t3, $t3, 1          # Next index
   blt $t3, $t4, LoopA2MC    # Evaluate index condition
   j ErrorA2MC
 
 FndA2MC:
-  li $v0, 4                 # print "Enter a Letter:" 
-  la $a0, string3
-  syscall                   # syscall print string3
 
   lw $t3, ($t2)             # Load value to be printed
   li $t4, 0x80000000        # Load bitmask
@@ -81,10 +92,15 @@ caseO:
   beq $t5, $0, pdot         # 10 Found
 
 caseE:
-  li $v0, 4                 # Print string code
-  la $a0, endLine           # Print NewLine
+  li $v0, 11                 # Print string code
+  lb $a0, s_spc           # Print space after each morse
   syscall                   # syscall print value
-  j EXIT                    # End
+  addi $t0, $t0, 1  #add one to address for next char
+  j Reset   #loop back to top for next character
+
+caseNull:
+ #this is kinda unnessiary but I'm leaving in in case More needs to be added
+  j EXIT #exit after null byte
 
 caseZ:
   sll $t3, $t3, 1           # Shift Left
