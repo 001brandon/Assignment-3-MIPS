@@ -15,7 +15,6 @@ string11: .asciiz "Compare\n"
 string12: .asciiz "Space\n"
 string13: .asciiz "\n[Error] Unrecognize Morse Code, exiting the program\n"
 string14: .asciiz "\n[Error] Extra space or no input detected, exiting the program\n"
-string13: .asciiz "you did it\n"
 stringvals: .asciiz "-. "
 endLine: .asciiz "\n"
 decodedAscii: .space 128
