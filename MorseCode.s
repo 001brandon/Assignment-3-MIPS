@@ -14,7 +14,7 @@ string10: .asciiz "Dash!\n"
 string11: .asciiz "Compare\n"
 string12: .asciiz "Space\n"
 string13: .asciiz "\n[Error] Unrecognize Morse Code, exiting the program\n"
-string14: .asciiz "\n[Error] Extra space or no input detected, exiting the program\n"
+string14: .asciiz "\n[Error] Extra space or invalid input detected, exiting the program\n"
 stringvals: .asciiz "-. "
 endLine: .asciiz "\n"
 decodedAscii: .space 128
@@ -131,7 +131,7 @@ ErrorA2MC:
   syscall                   # syscall print string6
 
   j EXIT
-  
+
 MC2A:  #Here we get the buffer we want to read from and print some stuff
   li $v0 , 4
   la $a0 , string2        
